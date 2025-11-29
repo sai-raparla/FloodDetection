@@ -33,14 +33,21 @@ for d in (df, df_test):
     d["cnt_ge_7"] = (d[orig_feats] >= 7).sum(axis=1)
     d["cnt_ge_8"] = (d[orig_feats] >= 8).sum(axis=1)
 
+    vals = d[orig_feats].values
+    vals_sorted = np.sort(vals, axis=1)
+    for i in range(vals_sorted.shape[1]):
+        d[f"sorted_{i}"] = vals_sorted[:, i]
+
+sorted_cols = [f"sorted_{i}" for i in range(len(orig_feats))]
+
 new_features = orig_feats + [
     "row_sum", "row_mean", "row_std", "row_max", "row_min",
     "cnt_ge_6", "cnt_ge_7", "cnt_ge_8"
-]
+] + sorted_cols
 
 X = df[new_features].values
 X_test = df_test[new_features].values
-y = df["FloodProbability"].values  
+y = df["FloodProbability"].values
 
 print("X shape:", X.shape)
 print("y shape:", y.shape)
@@ -54,7 +61,7 @@ skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 oof_preds = np.zeros(len(train))
 test_preds = np.zeros(len(test))
 scores = []
-
+seed = 2025
 #model train
 for fold, (tr_idx, val_idx) in enumerate(skf.split(X, y_bins), start=1):
     print(f"\n===== Fold {fold} =====")
@@ -62,18 +69,18 @@ for fold, (tr_idx, val_idx) in enumerate(skf.split(X, y_bins), start=1):
     y_tr, y_val = y[tr_idx], y[val_idx]
 
     model = xgb.XGBRegressor(
-    n_estimators=1000,
-    learning_rate=0.05,
-    max_depth=6,
+    n_estimators=1500,       
+    learning_rate=0.03,    
+    max_depth=8,          
     subsample=0.8,
     colsample_bytree=0.8,
     reg_lambda=1.0,
     objective="reg:squarederror",
-    tree_method="hist",    
+    tree_method="hist",
     n_jobs=-1,
-    random_state=42,
-    eval_metric="rmse",     
-    )
+    random_state=seed,
+    eval_metric="rmse",
+)
 
     model.fit(
         X_tr,
@@ -101,5 +108,5 @@ submission = pd.DataFrame({
     "id": test["id"],
     "FloodProbability": test_preds
 })
-submission.to_csv("submission_xgb.csv", index=False)
-print("Saved submission_xgb.csv")
+submission.to_csv(f"submissions/submission_xgb_{seed}.csv", index=False)
+print(f"Saved submission_xgb_{seed}.csv")
