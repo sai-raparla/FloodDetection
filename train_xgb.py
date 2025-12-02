@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
-
-
+import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import r2_score
 import xgboost as xgb
+from plots import make_plots
+
 
 #load data
 train = pd.read_csv("Data/train.csv")
@@ -104,6 +105,15 @@ for fold, (tr_idx, val_idx) in enumerate(skf.split(X, y_bins), start=1):
 print("\nCV R2 mean:", np.mean(scores))
 print("CV R2 std: ", np.std(scores))
 
+oof_df = pd.DataFrame({
+    "y_true": y,
+    "y_pred": oof_preds
+})
+oof_df.to_csv("oof_predictions.csv", index=False)
+
+make_plots("oof_predictions.csv")
+
+#submission code
 submission = pd.DataFrame({
     "id": test["id"],
     "FloodProbability": test_preds
