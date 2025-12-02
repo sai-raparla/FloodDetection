@@ -18,4 +18,5 @@ print(train.shape, test.shape)
 
 sns.histplot(train["FloodProbability"], bins=50, kde=True)
 plt.title("FloodProbability distribution")
+plt.savefig("charts/class_distribution.png")
 plt.show()
